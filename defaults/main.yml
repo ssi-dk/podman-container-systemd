@@ -32,6 +32,12 @@ service_name: "{{ container_name }}-container-pod-{{ container_run_as_user }}.se
 # to sepped up you can disable always checking if podman is installed.
 skip_podman_install: true
 
+# Ignore making changes to firewalld
+skip_firewalld: false
+
+# Ignore image auto update
+skip_auto_update: false
+
 podman_dependencies_rootless:
   - fuse-overlayfs
   - slirp4netns
