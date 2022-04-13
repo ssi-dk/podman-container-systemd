@@ -1,5 +1,25 @@
 ---
 
+- name: Populate service facts
+  ansible.builtin.service_facts:
+
+- name: Skip firewall setup if firewalld.service does not exist
+  set_fact:
+    skip_firewalld: true
+  when: "'firewalld.service' not in ansible_facts['services']"
+
+- name: Skip firewall setup if firewalld.service is not running
+  set_fact:
+    skip_firewalld: true
+  when: >
+    "'firewalld.service' in ansible_facts['services']" and
+    ansible_facts['services']['firewalld.service']['state'] != 'running'
+
+- name: Skip image auto update if podman-auto-update.service does not exist
+  set_fact:
+    skip_auto_update: true
+  when: "'podman-auto-update.service' not in ansible_facts['services']"
+
 - name: prepare rootless stuff if needed
   block:
 
@@ -244,6 +264,7 @@
       scope: "{{ systemd_scope }}"
       state: started
       enabled: true
+    when: skip_auto_update is false
 
   when: container_state == "running"
 
@@ -300,8 +321,9 @@
   - name: Force all notified handlers to run at this point
     meta: flush_handlers
 
-  when: container_firewall_ports is defined
-
+  when:
+    - skip_firewalld is false
+    - container_firewall_ports is defined
 
 - name: do cleanup stuff when container_state is "absent"
   block:
